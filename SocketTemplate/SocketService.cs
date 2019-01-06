@@ -62,30 +62,32 @@ namespace SocketTemplate
         {
             try
             {
-                var ipEndPoint = new IPEndPoint(_Address, _Port);
-                var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                serverSocket.Bind(ipEndPoint);
-                serverSocket.Listen(1000);
-                Console.WriteLine($"{_Address}:{_Port} 服务端开始监听");
-
-                while (true)
+                using (var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                 {
-                    Console.WriteLine($"等待连接");
-                    var clientSocket = serverSocket.Accept();
+                    var ipEndPoint = new IPEndPoint(_Address, _Port);
+                    serverSocket.Bind(ipEndPoint);
+                    serverSocket.Listen(1000);
+                    Console.WriteLine($"{_Address}:{_Port} 服务端开始监听");
 
-                    var remoteEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
-                    var id = $"{remoteEndPoint.Address.ToString()}:{remoteEndPoint.Port}";
-                    Console.WriteLine($"{id} 已连接");
-
-                    var connection = new SocketConnection
+                    while (true)
                     {
-                        ID = id,
-                        ConnectionTime = DateTime.Now,
-                        ClientSocket = clientSocket
-                    };
-                    _ClientSockets.TryAdd(id, connection);
+                        Console.WriteLine($"等待连接");
+                        var clientSocket = serverSocket.Accept();
 
-                    clientSocket.BeginReceive(connection.Buffer, 0, connection.Buffer.Length, SocketFlags.None, ReceiveCallback, connection);
+                        var remoteEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
+                        var id = $"{remoteEndPoint.Address.ToString()}:{remoteEndPoint.Port}";
+                        Console.WriteLine($"{id} 已连接");
+
+                        var connection = new SocketConnection
+                        {
+                            ID = id,
+                            ConnectionTime = DateTime.Now,
+                            ClientSocket = clientSocket
+                        };
+                        _ClientSockets.TryAdd(id, connection);
+
+                        clientSocket.BeginReceive(connection.Buffer, 0, connection.Buffer.Length, SocketFlags.None, ReceiveCallback, connection);
+                    }
                 }
             }
             catch (Exception ex)
@@ -109,15 +111,12 @@ namespace SocketTemplate
                 var msg = Encoding.UTF8.GetString(connection.Buffer, 0, length);
                 Console.WriteLine($"收到消息{msg}");
                 connection.ClientSocket.Send(Encoding.UTF8.GetBytes("收到消息"));
+                connection.ClientSocket.BeginReceive(connection.Buffer, 0, connection.Buffer.Length, SocketFlags.None, ReceiveCallback, connection);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"ReceiveCallback错误：{ex.Message}");
                 RemoveSocket(connection.ID);
-            }
-            finally
-            {
-                connection.ClientSocket.BeginReceive(connection.Buffer, 0, connection.Buffer.Length, SocketFlags.None, ReceiveCallback, connection);
             }
         }
 
