@@ -71,7 +71,6 @@ namespace SocketTemplate
 
                     while (true)
                     {
-                        Console.WriteLine($"等待连接");
                         var clientSocket = serverSocket.Accept();
 
                         var remoteEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
@@ -108,9 +107,9 @@ namespace SocketTemplate
                     return;
                 }
 
-                var msg = Encoding.UTF8.GetString(connection.Buffer, 0, length);
-                Console.WriteLine($"收到消息{msg}");
-                connection.ClientSocket.Send(Encoding.UTF8.GetBytes("收到消息"));
+                var msg = Encoding.GetEncoding("GB2312").GetString(connection.Buffer, 0, length);
+                Console.WriteLine($"收到消息：{msg}");
+                connection.ClientSocket.Send(Encoding.GetEncoding("GB2312").GetBytes($"收到消息：{msg}"));
                 connection.ClientSocket.BeginReceive(connection.Buffer, 0, connection.Buffer.Length, SocketFlags.None, ReceiveCallback, connection);
             }
             catch (Exception ex)

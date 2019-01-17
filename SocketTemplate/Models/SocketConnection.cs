@@ -9,7 +9,7 @@ namespace SocketTemplate.Models
 {
     public class SocketConnection
     {
-        public const int BufferSize = 16 * 1024;
+        public const int BufferSize = 10 * 1024;
 
         public byte[] Buffer = new byte[BufferSize];
 
