@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 
 namespace SocketTemplate
 {
-    public class SocketService
+    public class TcpListenerService
     {
         private IPEndPoint _LocalEndPoint = null;
         private ConcurrentDictionary<string, AsyncUserToken> _UserTokens = new ConcurrentDictionary<string, AsyncUserToken>();
 
         #region Constructor
-        public SocketService(string ip, int port)
+        public TcpListenerService(string ip, int port)
         {
             _LocalEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
         }
@@ -26,27 +26,29 @@ namespace SocketTemplate
         #region Public Methods
         public void StartListen()
         {
+            TcpListener listener = null;
             try
             {
-                using (var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
-                {
-                    listener.Bind(_LocalEndPoint);
-                    listener.Listen(1000);
-                    Console.WriteLine($"开始监听{_LocalEndPoint.Address}:{_LocalEndPoint.Port}");
-                    StartAccept(listener);
-                }
+                listener = new TcpListener(_LocalEndPoint);
+                listener.Start();
+                Console.WriteLine($"开始监听{_LocalEndPoint.Address}:{_LocalEndPoint.Port}");
+                StartAccept(listener);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"StartListen错误：{ex.Message}");
             }
+            finally
+            {
+                listener.Stop();
+            }
         }
         #endregion
 
         #region Private Methods
-        private void StartAccept(Socket listener)
+        private void StartAccept(TcpListener listener)
         {
-            var clientSocket = listener.Accept();
+            var clientSocket = listener.AcceptSocket();
             var ipEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
             var id = $"{ipEndPoint.Address.ToString()}:{ipEndPoint.Port}";
             Console.WriteLine($"{id}已连接");

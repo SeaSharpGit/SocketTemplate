@@ -39,7 +39,7 @@ namespace SocketTemplate
 
         private static void RunConsole()
         {
-            var service = new SocketService("127.0.0.1", 12345);
+            var service = new TcpListenerService("127.0.0.1", 12345);
             service.StartListen();
             Console.ReadKey();
         }
