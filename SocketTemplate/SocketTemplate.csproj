@@ -37,6 +37,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -46,6 +47,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Async.cs" />
+    <Compile Include="Models\BufferManager.cs" />
+    <Compile Include="Models\SocketAsyncEventArgsPool.cs" />
     <Compile Include="Service.cs">
       <SubType>Component</SubType>
     </Compile>

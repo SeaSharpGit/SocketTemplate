@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace SocketTemplate.Models
 {
-    public class SocketConnection
+    public class AsyncUserToken
     {
         public const int BufferSize = 10 * 1024;
 
@@ -15,19 +16,21 @@ namespace SocketTemplate.Models
 
         public string ID { get; set; }
 
+        public IPEndPoint IPEndPoint { get; set; }
+
         public DateTime ConnectionTime { get; set; }
 
-        public Socket ClientSocket { get; set; }
+        public Socket Socket { get; set; }
 
         public void Close()
         {
-            if (ClientSocket == null)
+            if (Socket == null)
             {
                 return;
             }
 
-            ClientSocket.Shutdown(SocketShutdown.Both);
-            ClientSocket.Dispose();
+            Socket.Shutdown(SocketShutdown.Both);
+            Socket.Dispose();
         }
     }
 }

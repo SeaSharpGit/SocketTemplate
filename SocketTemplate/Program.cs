@@ -39,8 +39,9 @@ namespace SocketTemplate
 
         private static void RunConsole()
         {
-            SocketService.Instance.Start();
-            Console.ReadLine();
+            var service = new SocketService("127.0.0.1", 12345);
+            service.StartListen();
+            Console.ReadKey();
         }
     }
 }

@@ -13,94 +13,64 @@ namespace SocketTemplate
 {
     public class SocketService
     {
-        private readonly object _StartLock = new object();
-        private bool _IsStart = false;
-        private static readonly IPAddress _Address = IPAddress.Parse("127.0.0.1");
-        private static readonly int _Port = 12345;
-        private ConcurrentDictionary<string, SocketConnection> _ClientSockets = new ConcurrentDictionary<string, SocketConnection>();
-
-        #region Instance
-        private static readonly Lazy<SocketService> _SocketServiceLazy = new Lazy<SocketService>(() => new SocketService());
-        public static SocketService Instance
-        {
-            get
-            {
-                return _SocketServiceLazy.Value;
-            }
-        }
-        #endregion
+        private IPEndPoint _LocalEndPoint = null;
+        private ConcurrentDictionary<string, AsyncUserToken> _UserTokens = new ConcurrentDictionary<string, AsyncUserToken>();
 
         #region Constructor
-        private SocketService()
+        public SocketService(string ip, int port)
         {
-
+            _LocalEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
         }
         #endregion
 
-        public void Start()
-        {
-            if (_IsStart)
-            {
-                return;
-            }
-            lock (_StartLock)
-            {
-                if (_IsStart)
-                {
-                    return;
-                }
-                var thread = new Thread(BeginListening)
-                {
-                    IsBackground = true
-                };
-                thread.Start();
-                _IsStart = true;
-            }
-        }
-
-        private void BeginListening()
+        #region Public Methods
+        public void StartListen()
         {
             try
             {
-                using (var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                using (var listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                 {
-                    var ipEndPoint = new IPEndPoint(_Address, _Port);
-                    serverSocket.Bind(ipEndPoint);
-                    serverSocket.Listen(1000);
-                    Console.WriteLine($"{_Address}:{_Port} 服务端开始监听");
-
-                    while (true)
-                    {
-                        var clientSocket = serverSocket.Accept();
-
-                        var remoteEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
-                        var id = $"{remoteEndPoint.Address.ToString()}:{remoteEndPoint.Port}";
-                        Console.WriteLine($"{id} 已连接");
-
-                        var connection = new SocketConnection
-                        {
-                            ID = id,
-                            ConnectionTime = DateTime.Now,
-                            ClientSocket = clientSocket
-                        };
-                        _ClientSockets.TryAdd(id, connection);
-
-                        clientSocket.BeginReceive(connection.Buffer, 0, connection.Buffer.Length, SocketFlags.None, ReceiveCallback, connection);
-                    }
+                    listenSocket.Bind(_LocalEndPoint);
+                    listenSocket.Listen(1000);
+                    Console.WriteLine($"开始监听{_LocalEndPoint.Address}:{_LocalEndPoint.Port}");
+                    StartAccept(listenSocket);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"BeginListening错误：{ex.Message}");
+                Console.WriteLine($"StartListen错误：{ex.Message}");
             }
+        }
+        #endregion
+
+        #region Private Methods
+        private void StartAccept(Socket listenSocket)
+        {
+            var clientSocket = listenSocket.Accept();
+            var ipEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
+            var id = $"{ipEndPoint.Address.ToString()}:{ipEndPoint.Port}";
+            Console.WriteLine($"{id}已连接");
+
+            var userToken = new AsyncUserToken
+            {
+                ID = id,
+                ConnectionTime = DateTime.Now,
+                IPEndPoint = ipEndPoint,
+                Socket = clientSocket
+            };
+            _UserTokens.TryAdd(id, userToken);
+
+            clientSocket.BeginReceive(userToken.Buffer, 0, userToken.Buffer.Length, SocketFlags.None, ReceiveCallback, userToken);
+
+            StartAccept(listenSocket);
         }
 
         private void ReceiveCallback(IAsyncResult ar)
         {
-            var connection = (SocketConnection)ar.AsyncState;
+            var connection = (AsyncUserToken)ar.AsyncState;
             try
             {
-                int length = connection.ClientSocket.EndReceive(ar);
+                int length = connection.Socket.EndReceive(ar);
                 if (length == 0)
                 {
                     RemoveSocket(connection.ID);
@@ -108,9 +78,10 @@ namespace SocketTemplate
                 }
 
                 var msg = Encoding.GetEncoding("GB2312").GetString(connection.Buffer, 0, length);
-                Console.WriteLine($"收到消息：{msg}");
-                connection.ClientSocket.Send(Encoding.GetEncoding("GB2312").GetBytes($"收到消息：{msg}"));
-                connection.ClientSocket.BeginReceive(connection.Buffer, 0, connection.Buffer.Length, SocketFlags.None, ReceiveCallback, connection);
+                var remoteEndPoint = (IPEndPoint)connection.Socket.RemoteEndPoint;
+                Console.WriteLine($"{remoteEndPoint.Address}:{remoteEndPoint.Port}消息：{msg}");
+                connection.Socket.Send(Encoding.GetEncoding("GB2312").GetBytes(msg));
+                connection.Socket.BeginReceive(connection.Buffer, 0, connection.Buffer.Length, SocketFlags.None, ReceiveCallback, connection);
             }
             catch (Exception ex)
             {
@@ -121,11 +92,12 @@ namespace SocketTemplate
 
         private void RemoveSocket(string id)
         {
-            if (_ClientSockets.TryRemove(id, out SocketConnection remove))
+            if (_UserTokens.TryRemove(id, out AsyncUserToken remove))
             {
                 remove.Close();
             }
         }
+        #endregion
 
     }
 }
