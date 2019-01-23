@@ -14,6 +14,8 @@ namespace SocketTemplate
     public class SocketService
     {
         private IPEndPoint _LocalEndPoint = null;
+        private const int _ListenerBacklog = 1000;
+        private readonly static Encoding _Encoding = Encoding.GetEncoding("GB2312");
         private ConcurrentDictionary<string, AsyncUserToken> _UserTokens = new ConcurrentDictionary<string, AsyncUserToken>();
 
         #region Constructor
@@ -31,7 +33,7 @@ namespace SocketTemplate
                 using (var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                 {
                     listener.Bind(_LocalEndPoint);
-                    listener.Listen(1000);
+                    listener.Listen(_ListenerBacklog);
                     Console.WriteLine($"开始监听{_LocalEndPoint.Address}:{_LocalEndPoint.Port}");
                     StartAccept(listener);
                 }
@@ -77,10 +79,10 @@ namespace SocketTemplate
                     return;
                 }
 
-                var msg = Encoding.GetEncoding("GB2312").GetString(userToken.Buffer, 0, length);
+                var msg = _Encoding.GetString(userToken.Buffer, 0, length);
                 var remoteEndPoint = (IPEndPoint)userToken.Socket.RemoteEndPoint;
                 Console.WriteLine($"{remoteEndPoint.Address}:{remoteEndPoint.Port}消息：{msg}");
-                userToken.Socket.Send(Encoding.GetEncoding("GB2312").GetBytes(msg));
+                userToken.Socket.Send(_Encoding.GetBytes(msg));
                 userToken.Socket.BeginReceive(userToken.Buffer, 0, userToken.Buffer.Length, SocketFlags.None, ReceiveCallback, userToken);
             }
             catch (Exception ex)

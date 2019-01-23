@@ -18,8 +18,8 @@ class Server
     Socket listenSocket;            // the socket used to listen for incoming connection requests
     // pool of reusable SocketAsyncEventArgs objects for write, read and accept socket operations
     SocketAsyncEventArgsPool m_readWritePool;
-    int m_totalBytesRead;           // counter of the total # bytes received by the server
-    int m_numConnectedSockets;      // the total number of clients connected to the server 
+    int m_totalBytesRead=0;           // counter of the total # bytes received by the server
+    int m_numConnectedSockets=0;      // the total number of clients connected to the server 
     Semaphore m_maxNumberAcceptedClients;
 
     // Create an uninitialized server instance.  
@@ -30,14 +30,11 @@ class Server
     // <param name="receiveBufferSize">buffer size to use for each socket I/O operation</param>
     public Server(int numConnections, int receiveBufferSize)
     {
-        m_totalBytesRead = 0;
-        m_numConnectedSockets = 0;
         m_numConnections = numConnections;
         m_receiveBufferSize = receiveBufferSize;
         // allocate buffers such that the maximum number of sockets can have one outstanding read and 
         //write posted to the socket simultaneously  
-        m_bufferManager = new BufferManager(receiveBufferSize * numConnections * opsToPreAlloc,
-            receiveBufferSize);
+        m_bufferManager = new BufferManager(receiveBufferSize * numConnections * opsToPreAlloc,receiveBufferSize);
 
         m_readWritePool = new SocketAsyncEventArgsPool(numConnections);
         m_maxNumberAcceptedClients = new Semaphore(numConnections, numConnections);
