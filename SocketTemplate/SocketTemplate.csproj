@@ -47,7 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Async.cs" />
+    <Compile Include="SocketDemo.cs" />
     <Compile Include="Models\BufferManager.cs" />
     <Compile Include="Models\SocketAsyncEventArgsPool.cs" />
     <Compile Include="Service.cs">
