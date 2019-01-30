@@ -22,15 +22,5 @@ namespace SocketTemplate.Models
 
         public Socket Socket { get; set; }
 
-        public void Close()
-        {
-            if (Socket == null)
-            {
-                return;
-            }
-
-            Socket.Shutdown(SocketShutdown.Both);
-            Socket.Dispose();
-        }
     }
 }

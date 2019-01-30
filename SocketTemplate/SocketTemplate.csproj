@@ -47,15 +47,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ISocketService.cs" />
+    <Compile Include="SocketAsyncEventService.cs" />
     <Compile Include="SocketDemo.cs" />
     <Compile Include="Models\BufferManager.cs" />
     <Compile Include="Models\SocketAsyncEventArgsPool.cs" />
-    <Compile Include="Service.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Service.Designer.cs">
-      <DependentUpon>Service.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Models\SocketConnection.cs" />
@@ -63,7 +59,9 @@
     <Compile Include="SocketService.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

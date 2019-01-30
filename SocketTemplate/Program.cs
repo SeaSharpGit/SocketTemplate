@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration.Install;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Text;
@@ -16,32 +17,16 @@ namespace SocketTemplate
         /// </summary>
         static void Main(string[] args)
         {
-            if (args == null || args.Length != 1)
-            {
-                throw new Exception("命令行参数错误");
-            }
+            var service = new SocketAsyncEventService("127.0.0.1", 12345);
+            service.Start();
 
-            var arg = string.Concat(args);
-            switch (arg)
+            //var server = new Server(100, 500);
+            //server.Init();
+            //server.Start(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 12345));
+            while (true)
             {
-                case "-i":
-                    ManagedInstallerClass.InstallHelper(new string[] { Assembly.GetExecutingAssembly().Location });
-                    break;
-                case "-u":
-                    ManagedInstallerClass.InstallHelper(new string[] { "/u", Assembly.GetExecutingAssembly().Location });
-                    break;
-                case "-c":
-                    RunConsole();
-                    Console.ReadLine();
-                    break;
+                Console.ReadKey();
             }
-        }
-
-        private static void RunConsole()
-        {
-            var service = new TcpListenerService("127.0.0.1", 12345);
-            service.StartListen();
-            Console.ReadKey();
         }
     }
 }

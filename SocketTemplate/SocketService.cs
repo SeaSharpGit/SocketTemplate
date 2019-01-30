@@ -11,10 +11,11 @@ using System.Threading.Tasks;
 
 namespace SocketTemplate
 {
-    public class SocketService
+    public class SocketService : ISocketService
     {
-        private IPEndPoint _LocalEndPoint = null;
+        private readonly IPEndPoint _LocalEndPoint = null;
         private const int _ListenerBacklog = 1000;
+        private Socket _Listener = null;
         private readonly static Encoding _Encoding = Encoding.GetEncoding("GB2312");
         private ConcurrentDictionary<string, AsyncUserToken> _UserTokens = new ConcurrentDictionary<string, AsyncUserToken>();
 
@@ -26,29 +27,29 @@ namespace SocketTemplate
         #endregion
 
         #region Public Methods
-        public void StartListen()
+        public void Start()
         {
             try
             {
-                using (var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+                using (_Listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                 {
-                    listener.Bind(_LocalEndPoint);
-                    listener.Listen(_ListenerBacklog);
+                    _Listener.Bind(_LocalEndPoint);
+                    _Listener.Listen(_ListenerBacklog);
                     Console.WriteLine($"开始监听{_LocalEndPoint.Address}:{_LocalEndPoint.Port}");
-                    StartAccept(listener);
+                    StartAccept();
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"StartListen错误：{ex.Message}");
+                Console.WriteLine($"Start错误：{ex.Message}");
             }
         }
         #endregion
 
         #region Private Methods
-        private void StartAccept(Socket listener)
+        private void StartAccept()
         {
-            var clientSocket = listener.Accept();
+            var clientSocket = _Listener.Accept();
             var ipEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
             var id = $"{ipEndPoint.Address.ToString()}:{ipEndPoint.Port}";
             Console.WriteLine($"{id}已连接");
@@ -64,7 +65,7 @@ namespace SocketTemplate
 
             clientSocket.BeginReceive(userToken.Buffer, 0, userToken.Buffer.Length, SocketFlags.None, ReceiveCallback, userToken);
 
-            StartAccept(listener);
+            StartAccept();
         }
 
         private void ReceiveCallback(IAsyncResult ar)
@@ -80,8 +81,7 @@ namespace SocketTemplate
                 }
 
                 var msg = _Encoding.GetString(userToken.Buffer, 0, length);
-                var remoteEndPoint = (IPEndPoint)userToken.Socket.RemoteEndPoint;
-                Console.WriteLine($"{remoteEndPoint.Address}:{remoteEndPoint.Port}消息：{msg}");
+                Console.WriteLine($"{userToken.ID}：{msg}");
                 userToken.Socket.Send(_Encoding.GetBytes(msg));
                 userToken.Socket.BeginReceive(userToken.Buffer, 0, userToken.Buffer.Length, SocketFlags.None, ReceiveCallback, userToken);
             }
@@ -96,8 +96,20 @@ namespace SocketTemplate
         {
             if (_UserTokens.TryRemove(id, out AsyncUserToken remove))
             {
-                remove.Close();
+                DisposeSocket(remove.Socket);
             }
+        }
+
+        private void DisposeSocket(Socket socket)
+        {
+            if (socket == null)
+            {
+                return;
+            }
+
+            socket.Shutdown(SocketShutdown.Both);
+            socket.Close();
+            socket.Dispose();
         }
         #endregion
 
