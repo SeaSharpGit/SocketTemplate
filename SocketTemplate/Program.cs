@@ -20,9 +20,6 @@ namespace SocketTemplate
             var service = new SocketAsyncEventService("127.0.0.1", 12345);
             service.Start();
 
-            //var server = new Server(100, 500);
-            //server.Init();
-            //server.Start(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 12345));
             while (true)
             {
                 Console.ReadKey();

@@ -97,6 +97,7 @@ namespace SocketTemplate
             if (_UserTokens.TryRemove(id, out AsyncUserToken remove))
             {
                 DisposeSocket(remove.Socket);
+                Console.WriteLine($"{remove.ID}断开连接");
             }
         }
 

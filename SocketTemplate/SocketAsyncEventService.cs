@@ -14,14 +14,14 @@ namespace SocketTemplate
     public class SocketAsyncEventService : ISocketService
     {
         private readonly IPEndPoint _LocalEndPoint = null;
-        private const int _MaxConnectionHandles = 2;//最大同时处理的连接数
+        private const int _MaxConnections = 5;//同时的连接数
         private const int _BufferSize = 500;
         private const int _OpsToPreAlloc = 2;//read, write
         private const int _ListenerBacklog = 1000;
         private Socket _Listener = null;
         private readonly static Encoding _Encoding = Encoding.GetEncoding("GB2312");
-        private SocketAsyncEventArgsPool _SocketAsyncEventArgsPool = new SocketAsyncEventArgsPool(_MaxConnectionHandles);
-        private readonly Semaphore _Semaphore = new Semaphore(_MaxConnectionHandles, _MaxConnectionHandles);
+        private SocketAsyncEventArgsPool _SocketAsyncEventArgsPool = new SocketAsyncEventArgsPool(_MaxConnections);
+        private readonly Semaphore _Semaphore = new Semaphore(_MaxConnections, _MaxConnections);
         private ConcurrentDictionary<string, AsyncUserToken> _UserTokens = new ConcurrentDictionary<string, AsyncUserToken>();
 
         #region Constructor
@@ -54,9 +54,9 @@ namespace SocketTemplate
         //给缓冲池分配内存，并分配给SocketAsyncEventArg
         private void Init()
         {
-            var bufferManager = new BufferManager(_BufferSize * _MaxConnectionHandles * _OpsToPreAlloc, _BufferSize);
+            var bufferManager = new BufferManager(_BufferSize * _MaxConnections * _OpsToPreAlloc, _BufferSize);
             bufferManager.InitBuffer();
-            for (int i = 0; i < _MaxConnectionHandles; i++)
+            for (int i = 0; i < _MaxConnections; i++)
             {
                 var socketAsyncEventArgs = new SocketAsyncEventArgs();
                 socketAsyncEventArgs.Completed += IO_Completed;
