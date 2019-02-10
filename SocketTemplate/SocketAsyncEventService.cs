@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using SocketTemplate.Models;
 
 namespace SocketTemplate
@@ -55,7 +52,6 @@ namespace SocketTemplate
         private void Init()
         {
             var bufferManager = new BufferManager(_BufferSize * _MaxConnections * _OpsToPreAlloc, _BufferSize);
-            bufferManager.InitBuffer();
             for (int i = 0; i < _MaxConnections; i++)
             {
                 var socketAsyncEventArgs = new SocketAsyncEventArgs();
@@ -139,7 +135,8 @@ namespace SocketTemplate
                 }
 
                 var userToken = (AsyncUserToken)e.UserToken;
-                var msg = _Encoding.GetString(e.Buffer);
+
+                var msg = _Encoding.GetString(e.Buffer, e.Offset, e.BytesTransferred);
                 Console.WriteLine($"{userToken.ID}：{msg}");
 
                 e.SetBuffer(e.Offset, e.BytesTransferred);

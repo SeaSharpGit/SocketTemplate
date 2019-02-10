@@ -48,7 +48,6 @@ class Server
     {
         // Allocates one large byte buffer which all I/O operations use a piece of.  This gaurds 
         // against memory fragmentation
-        m_bufferManager.InitBuffer();
 
         // preallocate pool of SocketAsyncEventArgs objects
         SocketAsyncEventArgs readWriteEventArg;
