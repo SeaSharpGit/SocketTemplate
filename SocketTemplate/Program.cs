@@ -17,12 +17,8 @@ namespace SocketTemplate
         /// </summary>
         static void Main(string[] args)
         {
-            //var service = new SocketAsyncEventService("127.0.0.1", 12345);
-            //service.Start();
-
-            var service = new SocketDemo(100,50000);
-            service.Init();
-            service.Start(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 12345));
+            var service = new SocketService("127.0.0.1", 12345);
+            service.Start();
 
             while (true)
             {
